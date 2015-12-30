@@ -14,4 +14,4 @@ The complete application is developed with PHP ande MySQL. Nette is the MVC fram
 
 Team
 -------
-LIPL Application Development Team
+LIPL Application Development Team & DB Team
