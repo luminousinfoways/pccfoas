@@ -21,6 +21,8 @@ class MasterPresenter extends UI\Presenter{
     	$this->template->datas = $this->database->table('master_currency_formats')->order('master_currency_format_id DESC');
     	$this->template->cnt = 0;
 	}
+	
+
 	protected function createComponentCurrencyFormat(){
 		$appearanceList = array('Pre'=>'Pre','Post'=>'Post');
 	    $form = new UI\Form;
@@ -119,19 +121,21 @@ class MasterPresenter extends UI\Presenter{
 	}		
 	public function createComponentMailSetting(){
 		$htmlList = array('Y'=>'Yes','N'=>'No');
-		$sequreConnection = array(''=>'No','ssl'=>'SSL','tls');
+		$sms = array('N'=>'No','Y'=>'Yes');
+		$sequreConnection = array(''=>'No','ssl'=>'SSL','tls'=>'TLS');
 	    $form = new UI\Form;
 	    $form->addHidden('created')->setValue(date('Y-m-d'));
 	    $form->addHidden('modified')->setValue(date('Y-m-d'));
 	    $form->addHidden('modified_by')->setValue(date(1));
-	    $form->addText('from_mail', 'From Mail Id :')->setRequired("Please enter from mail id");
+	    $form->addText('from_mail', 'From Mail Id :')->setRequired("Please enter from mail id")->addRule(Form::EMAIL, 'Please enter valid mail address');;
 	    $form->addText('sender_name', 'Sender Name :')->setRequired("Please enter from name");
 	    $form->addText('smtp_server', 'SMTP Server :')->setRequired("Please enter SMTP server address");
 	    $form->addPassword('password', 'SMTP Password:')->setRequired("please enter SMTP password");
-	    $form->addSelect('sequre_connection', 'Sequre Connection:',$sequreConnection)->setRequired();
-	    $form->addText('smtp_port', 'Smtp Port:')->setRequired("please enter SMTP port");
-	    $form->addText('smtp_port', 'Smtp Port:')->setRequired("please enter SMTP port");
+	    $form->addSelect('secure_connection', 'Sequre Connection:',$sequreConnection);
+	    $form->addText('smtp_port', 'Smtp Port:')->setRequired("please enter SMTP port")->setType('number');
+	    $form->addSelect('is_ssl', 'is SSL? :',$sms)->setRequired();
 	    $form->addSelect('is_html', 'Is Html?:',$htmlList)->setRequired();
+	    $form->addSelect('sms_enable', 'SMS Enable?:',$sms)->setRequired();
 	    $form->addSubmit('save', 'Save');
 	    $form->onSuccess[] = array($this, 'mailSettingSucceeded');
 	    return $form;
@@ -153,7 +157,7 @@ class MasterPresenter extends UI\Presenter{
 	    $data = $this->database->table('master_mail_settings')->get($master_mail_setting_id);
 	    if (!$data) {
 	        $this->error('Post not found');
-	    }
+	    }	    
 	    $this['mailSetting']->setDefaults($data->toArray());
 	}
 	public function actionMailDelete($master_mail_setting_id){
@@ -234,7 +238,7 @@ class MasterPresenter extends UI\Presenter{
 	 * @author :subrat
 	 * @date dgdfgfdg
 	 * [foo description]
-	 */
+	 * 	 	 */
 
 	public function actionOrganizationEdit($organization_id){
 	    $data = $this->database->table('organizations')->get($organization_id);
@@ -251,273 +255,152 @@ class MasterPresenter extends UI\Presenter{
 				$this->flashMessage('Organization was deleted', 'success');
 			}
 		$this->redirect('organization');	
-	}
-	/**
-	 * @author  : Subrata <[subrata.rout@lipl.in]>
-	 * @date( 29th dec, 2015)
-	 * [foo description]
-	 */
-	public function renderWing(){
-		$this->template->datas = $this->database->table('master_wings')->where('is_trash', 0)->order('id DESC');
-		$this->template->cnt = 0;
-	}
-	public function createComponentWing(){
-		$wings = array(0=>'— Select any Wing —');
-		$wings += $this->database->table('master_wings')->where('is_trash', 0)->where('is_enable', 1)->fetchPairs('id', 'name');
-	    $form = new UI\Form;
-	   	$form->addText('name', 'Wing Name :')->setRequired("Please enter wing name");
-	    $form->addText('wing_head', 'Wing Head :')->setRequired("Please enter Wing Head");
-	    $form->addSelect('parent_id', 'Parent Wing :',$wings);
-	    $form->addHidden('created')->setValue(date('Y-m-d'));
-	    $form->addHidden('modified')->setValue(date('Y-m-d'));
-	    $form->addHidden('created_by')->setValue(1);
-	    $form->addHidden('modified_by')->setValue(1);	    
-	    $form->addSubmit('save', 'Save');
-	    $form->onSuccess[] = array($this, 'wingSucceeded');
-	    return $form;
 	}	
-	public function wingSucceeded($form, $values){
-	    $id = $this->getParameter('id');
-	    if($id){
-	    	unset($values['created']);
-	        $post = $this->database->table('master_wings')->get($id);
-	        $post->update($values);
-	        $this->flashMessage('Wing was updated', 'success');
-	    }else{
-	        $post = $this->database->table('master_wings')->insert($values);
-	        $this->flashMessage('Wing was saved', 'success');
-	    }
-	    $this->redirect('wing');		
-	}
-	public function actionWingEdit($id){
-	    $data = $this->database->table('master_wings')->get($id);
-	    if (!$data) {
-	        $this->error('Post not found');
-	    }
-	    $this['wing']->setDefaults($data->toArray());
-	}
-	public function actionWingDelete($id){
-		$values['is_trash'] = 1;
-        $post = $this->database->table('master_wings')->get($id);
-		if($post->update($values)){
-			$this->flashMessage('Wing was deleted', 'success');
-		}else{
-			$this->flashMessage('Invalid request for delete', 'success');
-		}
-		$this->redirect('wing');	
-	}
-	public function actionWingAction($id){
-        $post = $this->database->table('master_wings')->get($id);
-        if(isset($post['is_enable']) && $post['is_enable'] == 0){
-        	$values['is_enable'] = 1;
-        }else{
-        	$values['is_enable'] = 0;
-        }
-		if($post->update($values)){
-			if($values['is_enable'] == 1){
-				$this->flashMessage('Wing was enabled', 'success');
-			}else{
-				$this->flashMessage('Wing was disabled', 'danger');
-			}
-		}else{
-			$this->flashMessage('Invalid request for delete', 'success');
-		}
-		$this->redirect('wing');		
-	}	
-	public function renderSection(){
-		$this->template->datas = $this->database->table('master_sections')->where('is_trash', 0)->order('id DESC');
-		$this->template->cnt = 0;
-	}
-	public function createComponentSection(){
-		$wings = $this->database->table('master_wings')->where('is_trash', 0)->where('is_enable', 1)->fetchPairs('id', 'name');
-	    $form = new UI\Form;
-	   	$form->addText('name', 'Section Name :')->setRequired("Please enter section name");
-	    $form->addSelect('wing_id', 'Wing Name :',$wings)->setPrompt('— Select any Wing —')->setRequired("Please select wing name");
-	    $form->addHidden('created')->setValue(date('Y-m-d'));
-	    $form->addHidden('modified')->setValue(date('Y-m-d'));
-	    $form->addHidden('created_by')->setValue(1);
-	    $form->addHidden('modified_by')->setValue(1);
 
-	    $form->addSubmit('save', 'Save');
-	    $form->onSuccess[] = array($this, 'sectionSucceeded');
-	    return $form;
-	}	
-	public function sectionSucceeded($form, $values){
-	    $id = $this->getParameter('id');
-	    if($id) {
-	    	unset($values['created']);
-	        $post = $this->database->table('master_sections')->get($id);
-	        $post->update($values);
-	        $this->flashMessage('Section was updated', 'success');
-	    }else{
-	        $post = $this->database->table('master_sections')->insert($values);
-	        $this->flashMessage('Section was saved', 'success');
-	    }
-	    $this->redirect('section');		
-	}
-	public function actionSectionEdit($id){
-	    $data = $this->database->table('master_sections')->get($id);
-	    if (!$data) {
-	        $this->error('Post not found');
-	    }
-	    $this['section']->setDefaults($data->toArray());
-	}
-	public function actionSectionDelete($id){
-		$values['is_trash'] = 1;
-        $post = $this->database->table('master_sections')->get($id);
-		if($post->update($values)){
-			$this->flashMessage('Section was deleted', 'success');
-		}else{
-			$this->flashMessage('Invalid request for delete', 'success');
-		}
-		$this->redirect('section');	
-
-	}
-	public function actionSectionAction($id){
-        $post = $this->database->table('master_sections')->get($id);
-        if(isset($post['is_enable']) && $post['is_enable'] == 0){
-        	$values['is_enable'] = 1;
-        }else{
-        	$values['is_enable'] = 0;
-        }
-		if($post->update($values)){
-			if($values['is_enable'] == 1){
-				$this->flashMessage('Section was enabled', 'success');
-			}else{
-				$this->flashMessage('Section was disabled', 'danger');
-			}
-		}else{
-			$this->flashMessage('Invalid request for delete', 'success');
-		}
-		$this->redirect('section');		
+	/*
+     *Code start for master mail setting
+	*/ 
+	public function renderMenu(){
+		$this->template->menu = $this->database->table('master_menus')->where('is_trash', 0)->order('id DESC');		
+		$this->template->cnt = 0;
 	}		
-	public function renderDesignation(){
-		$this->template->datas = $this->database->table('master_designations')->where('is_trash', 0)->order('id DESC');
-		$this->template->cnt = 0;
-	}
-	public function createComponentDesignation(){
-		$sections = $this->database->table('master_sections')->where('is_trash', 0)->where('is_enable', 1)->fetchPairs('id', 'name');
+	public function createComponentMenu(){
 	    $form = new UI\Form;
-	   	$form->addText('name', 'Designation :')->setRequired("Please enter section name");
-	    $form->addSelect('section_id', 'Section :',$sections)->setPrompt('— Select any Section —')->setRequired("Please select section");
-	    $form->addHidden('created')->setValue(date('Y-m-d'));
-	    $form->addHidden('modified')->setValue(date('Y-m-d'));
-	    $form->addHidden('created_by')->setValue(1);
-	    $form->addHidden('modified_by')->setValue(1);
+	    $this->database->table('master_menus')->order('name DESC');
+	    $menuList =array(0=>"No Parent");
+	    $menuList += $wings = $this->database->table('master_menus')->fetchPairs('id', 'name');
 
-	    $form->addSubmit('save', 'Save');
-	    $form->onSuccess[] = array($this, 'designationSucceeded');
-	    return $form;
-	}	
-	public function designationSucceeded($form, $values){
-	    $id = $this->getParameter('id');
-	    if($id) {
-	    	unset($values['created']);
-	        $post = $this->database->table('master_designations')->get($id);
-	        $post->update($values);
-	        $this->flashMessage('Designation was updated', 'success');
-	    }else{
-	        $post = $this->database->table('master_designations')->insert($values);
-	        $this->flashMessage('Designation was saved', 'success');
-	    }
-	    $this->redirect('designation');		
-	}
-	public function actionDesignationEdit($id){
-	    $data = $this->database->table('master_designations')->get($id);
-	    if (!$data) {
-	        $this->error('Post not found');
-	    }
-	    $this['designation']->setDefaults($data->toArray());
-	}
-	public function actionDesignationDelete($id){
-		$values['is_trash'] = 1;
-        $post = $this->database->table('master_designations')->get($id);
-		if($post->update($values)){
-			$this->flashMessage('Designation was deleted', 'success');
-		}else{
-			$this->flashMessage('Invalid request for delete', 'success');
-		}
-		$this->redirect('designation');	
-	}
-	public function actionDesignationAction($id){
-        $post = $this->database->table('master_designations')->get($id);
-        if(isset($post['is_enable']) && $post['is_enable'] == 0){
-        	$values['is_enable'] = 1;
-        }else{
-        	$values['is_enable'] = 0;
-        }
-		if($post->update($values)){
-			if($values['is_enable'] == 1){
-				$this->flashMessage('Designation was enabled', 'success');
-			}else{
-				$this->flashMessage('Designation was disabled', 'danger');
-			}
-		}else{
-			$this->flashMessage('Invalid request for delete', 'success');
-		}
-		$this->redirect('designation');		
-	}		
-	public function renderUsertype(){
-		$this->template->datas = $this->database->table('master_user_type')->where('is_trash', 0)->order('id DESC');
-		$this->template->cnt = 0;
-	}
-	public function createComponentUsertype(){
-		$form = new UI\Form;
-	   	$form->addText('name', 'User Type :')->setRequired("Please enter user type");
-	    $form->addHidden('created')->setValue(date('Y-m-d'));
-	    $form->addHidden('modified')->setValue(date('Y-m-d'));
+	    $form->addHidden('created')->setValue(date('Y-m-d H:i:s'));
+	    $form->addHidden('modified')->setValue(date('Y-m-d H:i:s'));
 	    $form->addHidden('created_by')->setValue(1);
 	    $form->addHidden('modified_by')->setValue(1);
+	    $form->addText('name', 'Menu Name :')->setRequired("Please enter menu name");
+	    $form->addText('menu_url', 'Menu URL :')->setRequired("Please enter menu name");
+	    $form->addTextarea('description', 'Menu Description :')->setRequired("Please enter menu description");
+	    $form->addSelect('parent_id', 'Parent Menu Name :',$menuList);
+	    
 	    $form->addSubmit('save', 'Save');
-	    $form->onSuccess[] = array($this, 'usertypeSucceeded');
+	    $form->onSuccess[] = array($this, 'menuSucceeded');
 	    return $form;
 	}	
-	public function usertypeSucceeded($form, $values){
-	    $id = $this->getParameter('id');
-	    if($id) {
+	public function menuSucceeded($form, $values){
+	    $menu_id = $this->getParameter('menu_id');
+	    if($menu_id) {
 	    	unset($values['created']);
-	        $post = $this->database->table('master_user_type')->get($id);
-	        $post->update($values);
-	        $this->flashMessage('User type was updated', 'success');
+	        $menu = $this->database->table('master_menus')->get($menu_id);
+	        $menu->update($values);
+	        $this->flashMessage('menu has updated', 'success');
 	    }else{
-	        $post = $this->database->table('master_user_type')->insert($values);
-	        $this->flashMessage('User type was saved', 'success');
+	        $menu = $this->database->table('master_menus')->insert($values);
+	        $this->flashMessage('menu has saved', 'success');
 	    }
-	    $this->redirect('usertype');		
+	    $this->redirect('menu');		
 	}
-	public function actionUsertypeEdit($id){
-	    $data = $this->database->table('master_user_type')->get($id);
+	public function actionMenuEdit($menu_id){
+	    $data = $this->database->table('master_menus')->get($menu_id);
 	    if (!$data) {
 	        $this->error('Post not found');
-	    }
-	    $this['usertype']->setDefaults($data->toArray());
+	    }	    
+	    $this['menu']->setDefaults($data->toArray());
 	}
-	public function actionUsertypeDelete($id){
+	public function actionMenuDelete($id){	
 		$values['is_trash'] = 1;
-        $post = $this->database->table('master_user_type')->get($id);
-		if($post->update($values)){
-			$this->flashMessage('User type was deleted', 'success');
+        $menu = $this->database->table('master_menus')->get($id);
+		if($menu->update($values)){
+			$this->flashMessage('Menu was deleted', 'success');
 		}else{
 			$this->flashMessage('Invalid request for delete', 'success');
 		}
-		$this->redirect('usertype');	
+		$this->redirect('menu');		
 	}
-	public function actionUsertypeAction($id){
-        $post = $this->database->table('master_user_type')->get($id);
-        if(isset($post['is_enable']) && $post['is_enable'] == 0){
+
+	public function actionMenuAction($id){
+        $menu = $this->database->table('master_menus')->get($id);
+        if(isset($menu['is_enable']) && $menu['is_enable'] == 0){
         	$values['is_enable'] = 1;
         }else{
         	$values['is_enable'] = 0;
         }
-		if($post->update($values)){
+		if($menu->update($values)){
 			if($values['is_enable'] == 1){
-				$this->flashMessage('User type was enabled', 'success');
+				$this->flashMessage('Menu was enabled', 'success');
 			}else{
-				$this->flashMessage('User type was disabled', 'success');
+				$this->flashMessage('Menu was disabled', 'danger');
 			}
+		}else{
+			$this->flashMessage('Invalid request for enable/disable', 'success');
+		}
+		$this->redirect('menu');		
+	}
+
+	/*
+     *Code start for document category
+	*/ 
+	public function renderDocumentCategory(){
+		$this->template->documentCategory = $this->database->table('master_document_categories')->where('is_trash', 0)->order('id DESC');		
+		$this->template->cnt = 0;
+	}		
+	public function createComponentDocumentCategory(){
+	    $form = new UI\Form;	    
+
+	    $form->addHidden('created')->setValue(date('Y-m-d H:i:s'));
+	    $form->addHidden('modified')->setValue(date('Y-m-d H:i:s'));
+	    $form->addHidden('created_by')->setValue(1);
+	    $form->addHidden('modified_by')->setValue(1);
+	    $form->addText('name', 'Category Name :')->setRequired("Please enter category name");
+	    
+	    $form->addSubmit('save', 'Save');
+	    $form->onSuccess[] = array($this, 'documentCategorySucceeded');
+	    return $form;
+	}	
+	public function documentCategorySucceeded($form, $values){
+	    $doc_cat_id = $this->getParameter('doc_cat_id');
+	    if($doc_cat_id) {
+	    	unset($values['created']);
+	        $docCat = $this->database->table('master_document_categories')->get($doc_cat_id);
+	        $docCat->update($values);
+	        $this->flashMessage('Document category has updated', 'success');
+	    }else{
+	        $docCat = $this->database->table('master_document_categories')->insert($values);
+	        $this->flashMessage('Document category has saved', 'success');
+	    }
+	    $this->redirect('documentCategory');		
+	}
+	public function actionDocumentCategoryEdit($doc_cat_id){
+	    $data = $this->database->table('master_document_categories')->get($doc_cat_id);
+	    if (!$data) {
+	        $this->error('Post not found');
+	    }	    
+	    $this['documentCategory']->setDefaults($data->toArray());
+	}
+	public function actionDocumentCategoryDelete($id){	
+		$values['is_trash'] = 1;
+        $menu = $this->database->table('master_document_categories')->get($id);
+		if($menu->update($values)){
+			$this->flashMessage('Menu was deleted', 'success');
 		}else{
 			$this->flashMessage('Invalid request for delete', 'success');
 		}
-		$this->redirect('usertype');		
-	}			
+		$this->redirect('documentCategory');		
+	}
+
+	public function actionDocumentCategoryAction($id){
+        $documentCat = $this->database->table('master_document_categories')->get($id);
+        if(isset($documentCat['is_enable']) && $documentCat['is_enable'] == 0){
+        	$values['is_enable'] = 1;
+        }else{
+        	$values['is_enable'] = 0;
+        }
+		if($documentCat->update($values)){
+			if($values['is_enable'] == 1){
+				$this->flashMessage('Menu was enabled', 'success');
+			}else{
+				$this->flashMessage('Menu was disabled', 'danger');
+			}
+		}else{
+			$this->flashMessage('Invalid request for enable/disable', 'success');
+		}
+		$this->redirect('documentCategory');		
+	}
 }
+
