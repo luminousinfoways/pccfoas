@@ -1,0 +1,36 @@
+{block content}
+<div id="content">
+	<h2>Manage Wing</h2>
+	<div class="boxes">		
+		{control wing}
+	</div>
+	<table n:if="$datas" id="data_table" border="1">
+		<tr>
+			<th>#</th>
+			<th>Wing Name</th>
+			<th>Wing Head</th>
+			<th>Parent</th>
+			<th>Created</th>			
+			<th>Action</th>
+			<th>Edit</th>
+			<th>Delete</th>
+		</tr>
+		<tr n:foreach="$datas as $data">
+			<td>{++$cnt}</td>
+			<td>{$data->name}</td>
+			<td>{$data->wing_head}</td>
+			<td>{$data->parent_id}</td>
+			<td>{$data->created|date:'d-m-Y'}</td>
+			<td><a n:href="wingAction $data->id">{($data->is_enable == 1)?'Disable':'Enable'}</a></td>
+			<td><a n:href="wingEdit $data->id">Edit</a></td>
+			<td><a n:href="wingDelete $data->id">Delete</a></td>			
+		</tr>
+	</table>		
+</div>
+{/block}
+
+{block scripts}
+{include parent}
+{/block}
+{block head}
+{/block}

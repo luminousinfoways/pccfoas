@@ -1,0 +1,52 @@
+{* This is the welcome page, you can delete it *}
+{block content}
+<div id="content">
+	<h2>Manage Organization</h2>
+	<div class="boxes">		
+		{control organization}
+	</div>
+	<table n:if="$datas" id="data_table" border="1">
+		<tr>
+			<th>#</th>
+			<th>Favicon</th>
+			<th>Logo</th>
+			<th>Banner</th>
+			<th>Created</th>
+			<th>Edit</th>
+			<th>Delete</th>
+		</tr>
+		<tr n:foreach="$datas as $data">
+			<td>{++$cnt}</td>
+			<td>{$data->favicon}</td>
+			<td>{$data->logo}</td>
+			<td>{$data->banner}</td>
+			<td>{$data->created|date:'d-m-Y'}</td>
+			<td>
+				<a n:href="organizationEdit $data->organization_id">Edit</a>
+			</td>
+			<td>
+				<a n:href="organizationDelete $data->organization_id">Delete</a>
+			</td>			
+		</tr>
+	</table>	
+</div>
+{/block}
+
+{block scripts}
+{include parent}
+<script src="https://files.nette.org/sandbox/jush.js"></script>
+<script>
+	jush.create_links = false;
+	jush.highlight_tag('code');
+	$('code.jush').each(function(){ $(this).html($(this).html().replace(/\x7B[/$\w].*?\}/g, '<span class="jush-latte">$&</span>')) });
+
+	$('a[href^=#]').click(function(){
+		$('html,body').animate({ scrollTop: $($(this).attr('href')).show().offset().top - 5 }, 'fast');
+		return false;
+	});
+</script>
+{/block}
+
+
+{block head}
+{/block}

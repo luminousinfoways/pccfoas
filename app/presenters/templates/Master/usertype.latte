@@ -1,0 +1,26 @@
+{block content}
+<div id="content">
+	<h2>Manage User Type</h2>
+	<div class="boxes">		
+		{control usertype}
+	</div>
+	<table n:if="$datas" id="data_table" border="1">
+		<tr>
+			<th>#</th>
+			<th>User Type</th>
+			<th>Created</th>
+			<th>Action</th>
+			<th>Edit</th>
+			<th>Delete</th>
+		</tr>
+		<tr n:foreach="$datas as $data">
+			<td>{++$cnt}</td>
+			<td>{$data->name}</td>
+			<td>{$data->created|date:'d/m/Y'}</td>
+			<td><a n:href="usertypeAction $data->id">{($data->is_enable == 1)?'Disable':'Enable'}</a></td>
+			<td><a n:href="usertypeEdit $data->id">Edit</a></td>
+			<td><a n:href="usertypeDelete $data->id">Delete</a></td>			
+		</tr>
+	</table>		
+</div>
+{/block}
